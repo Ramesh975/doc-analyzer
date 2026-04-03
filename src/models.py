@@ -1,5 +1,5 @@
 from pydantic import BaseModel, field_validator
-from typing import List, Optional
+from typing import List
 
 class DocumentRequest(BaseModel):
     fileName: str
@@ -19,12 +19,11 @@ class AnalyzeResponse(BaseModel):
     entities: EntitiesResponse
     sentiment: str
 
-    @field_validator('sentiment')
+    @field_validator('sentiment', mode='before')
     @classmethod
     def validate_sentiment(cls, v):
         allowed = ['Positive', 'Negative', 'Neutral']
-        # Fix capitalisation if wrong
         for a in allowed:
-            if v.lower() == a.lower():
+            if v and str(v).lower() == a.lower():
                 return a
         return 'Neutral'
