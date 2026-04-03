@@ -43,4 +43,3 @@ def _extract_image(data: bytes) -> str:
     if img.width < 1000:
         img = img.resize((img.width * 2, img.height * 2), Image.LANCZOS)
     return pytesseract.image_to_string(img, config='--psm 3')
-

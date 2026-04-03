@@ -1,0 +1,718 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Document Analyzer — Test Console</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: #0f172a;
+    color: #e2e8f0;
+    min-height: 100vh;
+  }
+
+  .header {
+    background: linear-gradient(135deg, #1e3a5f 0%, #0f766e 100%);
+    padding: 2rem;
+    text-align: center;
+    border-bottom: 2px solid #0f766e;
+  }
+
+  .header h1 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.4rem;
+  }
+
+  .header p {
+    color: #94d5cc;
+    font-size: 0.95rem;
+  }
+
+  .badge {
+    display: inline-block;
+    background: #0f766e;
+    color: #ccfbf1;
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin: 0.5rem 0.2rem 0;
+  }
+
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 2rem 1rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 768px) {
+    .container { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+
+  .card h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #94a3b8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .card h2 .dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #0f766e;
+  }
+
+  label {
+    display: block;
+    font-size: 0.8rem;
+    color: #94a3b8;
+    margin-bottom: 0.3rem;
+    margin-top: 0.8rem;
+  }
+
+  input[type="text"], input[type="url"], select {
+    width: 100%;
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.6rem 0.8rem;
+    color: #e2e8f0;
+    font-size: 0.9rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+
+  input:focus, select:focus {
+    border-color: #0f766e;
+  }
+
+  .file-drop {
+    border: 2px dashed #334155;
+    border-radius: 10px;
+    padding: 2rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    margin-top: 0.8rem;
+    position: relative;
+  }
+
+  .file-drop:hover, .file-drop.dragover {
+    border-color: #0f766e;
+    background: #0f2520;
+  }
+
+  .file-drop input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .file-drop .icon { font-size: 2rem; margin-bottom: 0.5rem; }
+
+  .file-drop p {
+    color: #64748b;
+    font-size: 0.85rem;
+  }
+
+  .file-drop .file-name {
+    color: #0f766e;
+    font-weight: 600;
+    margin-top: 0.5rem;
+    font-size: 0.9rem;
+  }
+
+  .btn {
+    width: 100%;
+    margin-top: 1.2rem;
+    padding: 0.85rem;
+    background: linear-gradient(135deg, #1e40af, #0f766e);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .btn:hover { opacity: 0.9; }
+  .btn:active { transform: scale(0.98); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+  .spinner {
+    width: 18px; height: 18px;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    display: none;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Results panel */
+  .result-panel {
+    grid-column: 1 / -1;
+    display: none;
+  }
+
+  .result-panel.show { display: block; }
+
+  .status-bar {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 0.8rem 1rem;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+
+  .status-bar.success { background: #064e3b; color: #6ee7b7; border: 1px solid #065f46; }
+  .status-bar.error   { background: #450a0a; color: #fca5a5; border: 1px solid #7f1d1d; }
+
+  .results-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .results-grid { grid-template-columns: 1fr; }
+    .result-panel { grid-column: 1; }
+  }
+
+  .result-card {
+    background: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 10px;
+    padding: 1.2rem;
+  }
+
+  .result-card h3 {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #64748b;
+    margin-bottom: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .result-card .score-badge {
+    margin-left: auto;
+    background: #1e3a5f;
+    color: #93c5fd;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+
+  .summary-text {
+    color: #cbd5e1;
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .sentiment-pill {
+    display: inline-block;
+    padding: 6px 20px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+
+  .sentiment-pill.Positive { background: #064e3b; color: #6ee7b7; }
+  .sentiment-pill.Negative { background: #450a0a; color: #fca5a5; }
+  .sentiment-pill.Neutral  { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
+
+  .entity-group { margin-bottom: 0.8rem; }
+
+  .entity-group-label {
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #64748b;
+    margin-bottom: 0.3rem;
+  }
+
+  .entity-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 5px;
+  }
+
+  .tag {
+    font-size: 0.78rem;
+    padding: 3px 10px;
+    border-radius: 6px;
+    font-weight: 500;
+  }
+
+  .tag.names  { background: #1e3a5f; color: #93c5fd; }
+  .tag.dates  { background: #2d1b69; color: #c4b5fd; }
+  .tag.orgs   { background: #064e3b; color: #6ee7b7; }
+  .tag.amounts{ background: #431407; color: #fdba74; }
+  .tag.empty  { color: #475569; font-style: italic; }
+
+  .json-toggle {
+    background: #0f172a;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    color: #64748b;
+    font-size: 0.8rem;
+    cursor: pointer;
+    width: 100%;
+    text-align: left;
+    margin-top: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .json-toggle:hover { color: #94a3b8; border-color: #475569; }
+
+  .json-block {
+    background: #020617;
+    border: 1px solid #1e293b;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 0.5rem;
+    font-family: 'Courier New', monospace;
+    font-size: 0.78rem;
+    line-height: 1.6;
+    color: #94a3b8;
+    white-space: pre-wrap;
+    word-break: break-all;
+    max-height: 300px;
+    overflow-y: auto;
+    display: none;
+  }
+
+  .json-block.show { display: block; }
+
+  .history-panel {
+    grid-column: 1 / -1;
+  }
+
+  .history-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0.6rem 0.8rem;
+    background: #0f172a;
+    border-radius: 6px;
+    margin-bottom: 0.4rem;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+
+  .history-item:hover { background: #1e293b; }
+
+  .history-item .hi-file { flex: 1; color: #cbd5e1; }
+  .history-item .hi-time { color: #475569; font-size: 0.75rem; }
+  .hi-status { width: 8px; height: 8px; border-radius: 50%; }
+  .hi-status.ok  { background: #10b981; }
+  .hi-status.err { background: #ef4444; }
+
+  .empty-history { color: #475569; font-size: 0.85rem; text-align: center; padding: 1rem; }
+
+  /* Syntax highlight */
+  .json-key   { color: #7dd3fc; }
+  .json-str   { color: #86efac; }
+  .json-num   { color: #fdba74; }
+  .json-bool  { color: #c4b5fd; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>🧠 AI Document Analyzer</h1>
+  <p>Test Console — Upload any document and get AI-powered analysis</p>
+  <div>
+    <span class="badge">PDF</span>
+    <span class="badge">DOCX</span>
+    <span class="badge">Images</span>
+    <span class="badge">Groq AI</span>
+    <span class="badge">spaCy NLP</span>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- Config Card -->
+  <div class="card">
+    <h2><span class="dot"></span> Configuration</h2>
+
+    <label>API Base URL</label>
+    <input type="url" id="apiUrl" value="http://localhost:8000" placeholder="https://your-app.up.railway.app">
+
+    <label>API Key (x-api-key)</label>
+    <input type="text" id="apiKey" value="my-test-key-123" placeholder="your-api-key">
+
+    <label>File Type</label>
+    <select id="fileType">
+      <option value="auto">Auto Detect</option>
+      <option value="pdf">PDF</option>
+      <option value="docx">DOCX</option>
+      <option value="image">Image</option>
+    </select>
+
+    <div style="margin-top:1rem;padding:0.8rem;background:#0f172a;border-radius:8px;font-size:0.75rem;color:#475569;">
+      <div style="margin-bottom:4px;color:#64748b;font-weight:600;">ENDPOINT</div>
+      <code id="endpointPreview" style="color:#0f766e">http://localhost:8000/api/document-analyze</code>
+    </div>
+  </div>
+
+  <!-- Upload Card -->
+  <div class="card">
+    <h2><span class="dot"></span> Upload Document</h2>
+
+    <div class="file-drop" id="fileDrop">
+      <input type="file" id="fileInput" accept=".pdf,.docx,.jpg,.jpeg,.png,.tiff,.bmp,.webp">
+      <div class="icon">📄</div>
+      <p>Drop your file here or click to browse</p>
+      <p>PDF, DOCX, JPG, PNG supported</p>
+      <div class="file-name" id="fileName"></div>
+    </div>
+
+    <button class="btn" id="analyzeBtn" onclick="analyze()" disabled>
+      <span class="spinner" id="spinner"></span>
+      <span id="btnText">Select a file to analyze</span>
+    </button>
+  </div>
+
+  <!-- Results Panel -->
+  <div class="result-panel" id="resultPanel">
+    <div class="status-bar" id="statusBar"></div>
+
+    <div class="results-grid">
+
+      <!-- Summary -->
+      <div class="result-card">
+        <h3>
+          📝 Summary
+          <span class="score-badge">2 pts</span>
+        </h3>
+        <div class="summary-text" id="summaryText">—</div>
+      </div>
+
+      <!-- Sentiment -->
+      <div class="result-card" style="display:flex;flex-direction:column;align-items:flex-start;">
+        <h3>
+          💬 Sentiment
+          <span class="score-badge">4 pts</span>
+        </h3>
+        <div id="sentimentDisplay" style="margin-top:0.5rem;"></div>
+      </div>
+
+      <!-- Entities — full width -->
+      <div class="result-card" style="grid-column:1/-1">
+        <h3>
+          🏷️ Entities
+          <span class="score-badge">4 pts</span>
+        </h3>
+
+        <div class="entity-group">
+          <div class="entity-group-label">👤 Names (People)</div>
+          <div class="entity-tags" id="namesDisplay"></div>
+        </div>
+
+        <div class="entity-group">
+          <div class="entity-group-label">📅 Dates</div>
+          <div class="entity-tags" id="datesDisplay"></div>
+        </div>
+
+        <div class="entity-group">
+          <div class="entity-group-label">🏢 Organizations</div>
+          <div class="entity-tags" id="orgsDisplay"></div>
+        </div>
+
+        <div class="entity-group">
+          <div class="entity-group-label">💰 Amounts</div>
+          <div class="entity-tags" id="amountsDisplay"></div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- Raw JSON -->
+    <button class="json-toggle" onclick="toggleJson()">
+      <span>{ } Raw JSON Response</span>
+      <span id="jsonArrow">▼</span>
+    </button>
+    <div class="json-block" id="jsonBlock"></div>
+  </div>
+
+  <!-- History -->
+  <div class="history-panel card">
+    <h2><span class="dot"></span> Test History</h2>
+    <div id="historyList">
+      <div class="empty-history">No tests run yet — upload a file above</div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  let selectedFile = null;
+  let history = [];
+  let jsonVisible = false;
+
+  // Update endpoint preview
+  document.getElementById('apiUrl').addEventListener('input', updatePreview);
+  function updatePreview() {
+    const url = document.getElementById('apiUrl').value.replace(/\/$/, '');
+    document.getElementById('endpointPreview').textContent = url + '/api/document-analyze';
+  }
+
+  // File selection
+  const fileInput = document.getElementById('fileInput');
+  const fileDrop  = document.getElementById('fileDrop');
+
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) selectFile(fileInput.files[0]);
+  });
+
+  fileDrop.addEventListener('dragover', e => { e.preventDefault(); fileDrop.classList.add('dragover'); });
+  fileDrop.addEventListener('dragleave', () => fileDrop.classList.remove('dragover'));
+  fileDrop.addEventListener('drop', e => {
+    e.preventDefault();
+    fileDrop.classList.remove('dragover');
+    if (e.dataTransfer.files[0]) selectFile(e.dataTransfer.files[0]);
+  });
+
+  function selectFile(file) {
+    selectedFile = file;
+    document.getElementById('fileName').textContent = '✅ ' + file.name + ' (' + formatSize(file.size) + ')';
+    document.getElementById('analyzeBtn').disabled = false;
+    document.getElementById('btnText').textContent = 'Analyze Document';
+
+    // Auto-detect type
+    const sel = document.getElementById('fileType');
+    if (sel.value === 'auto') {
+      const name = file.name.toLowerCase();
+      if (name.endsWith('.pdf')) sel.value = 'pdf';
+      else if (name.endsWith('.docx')) sel.value = 'docx';
+      else sel.value = 'image';
+      sel.value = 'auto'; // keep auto
+    }
+  }
+
+  function formatSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+    return (bytes/1024/1024).toFixed(1) + ' MB';
+  }
+
+  function detectType(file) {
+    const sel = document.getElementById('fileType').value;
+    if (sel !== 'auto') return sel;
+    const name = file.name.toLowerCase();
+    if (name.endsWith('.pdf')) return 'pdf';
+    if (name.endsWith('.docx')) return 'docx';
+    return 'image';
+  }
+
+  async function analyze() {
+    if (!selectedFile) return;
+
+    const btn     = document.getElementById('analyzeBtn');
+    const spinner = document.getElementById('spinner');
+    const btnText = document.getElementById('btnText');
+
+    btn.disabled  = true;
+    spinner.style.display = 'block';
+    btnText.textContent   = 'Analyzing...';
+
+    const apiUrl = document.getElementById('apiUrl').value.replace(/\/$/, '');
+    const apiKey = document.getElementById('apiKey').value;
+    const fileType = detectType(selectedFile);
+    const startTime = Date.now();
+
+    try {
+      // Read file as base64
+      const base64 = await toBase64(selectedFile);
+
+      const payload = {
+        fileName: selectedFile.name,
+        fileType: fileType,
+        fileBase64: base64
+      };
+
+      const response = await fetch(apiUrl + '/api/document-analyze', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-key': apiKey
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+      const data = await response.json();
+
+      if (response.ok && data.status === 'success') {
+        showSuccess(data, elapsed);
+        addHistory(selectedFile.name, fileType, true, elapsed, data);
+      } else {
+        showError(data.detail || data.status || 'Unknown error', response.status);
+        addHistory(selectedFile.name, fileType, false, elapsed, null);
+      }
+
+    } catch (err) {
+      showError('Connection failed: ' + err.message, 0);
+      addHistory(selectedFile.name, fileType, false, '—', null);
+    } finally {
+      btn.disabled  = false;
+      spinner.style.display = 'none';
+      btnText.textContent   = 'Analyze Again';
+    }
+  }
+
+  function toBase64(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload  = () => resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function showSuccess(data, elapsed) {
+    const panel = document.getElementById('resultPanel');
+    panel.classList.add('show');
+
+    // Status bar
+    const bar = document.getElementById('statusBar');
+    bar.className = 'status-bar success';
+    bar.innerHTML = `✅ <strong>Success</strong> — ${data.fileName} analyzed in ${elapsed}s`;
+
+    // Summary
+    document.getElementById('summaryText').textContent = data.summary || '—';
+
+    // Sentiment
+    const s = data.sentiment || 'Neutral';
+    document.getElementById('sentimentDisplay').innerHTML =
+      `<span class="sentiment-pill ${s}">${s}</span>`;
+
+    // Entities
+    renderTags('namesDisplay',  data.entities?.names,         'names');
+    renderTags('datesDisplay',  data.entities?.dates,         'dates');
+    renderTags('orgsDisplay',   data.entities?.organizations, 'orgs');
+    renderTags('amountsDisplay',data.entities?.amounts,       'amounts');
+
+    // Raw JSON
+    document.getElementById('jsonBlock').innerHTML = syntaxHighlight(JSON.stringify(data, null, 2));
+
+    panel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function showError(msg, code) {
+    const panel = document.getElementById('resultPanel');
+    panel.classList.add('show');
+    const bar = document.getElementById('statusBar');
+    bar.className = 'status-bar error';
+    bar.innerHTML = `❌ <strong>Error ${code}</strong> — ${msg}`;
+    document.getElementById('summaryText').textContent = '—';
+    document.getElementById('sentimentDisplay').innerHTML = '';
+    ['namesDisplay','datesDisplay','orgsDisplay','amountsDisplay'].forEach(id => {
+      document.getElementById(id).innerHTML = '<span class="tag empty">—</span>';
+    });
+  }
+
+  function renderTags(containerId, items, type) {
+    const el = document.getElementById(containerId);
+    if (!items || items.length === 0) {
+      el.innerHTML = '<span class="tag empty">None found</span>';
+      return;
+    }
+    el.innerHTML = items.map(item =>
+      `<span class="tag ${type}">${escHtml(item)}</span>`
+    ).join('');
+  }
+
+  function escHtml(str) {
+    return String(str)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toggleJson() {
+    jsonVisible = !jsonVisible;
+    document.getElementById('jsonBlock').classList.toggle('show', jsonVisible);
+    document.getElementById('jsonArrow').textContent = jsonVisible ? '▲' : '▼';
+  }
+
+  function syntaxHighlight(json) {
+    return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'json-num';
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'json-key' : 'json-str';
+      } else if (/true|false/.test(match)) {
+        cls = 'json-bool';
+      }
+      return `<span class="${cls}">${escHtml(match)}</span>`;
+    });
+  }
+
+  function addHistory(fileName, type, ok, elapsed, data) {
+    const time = new Date().toLocaleTimeString();
+    history.unshift({ fileName, type, ok, elapsed, time, data });
+    renderHistory();
+  }
+
+  function renderHistory() {
+    const el = document.getElementById('historyList');
+    if (history.length === 0) {
+      el.innerHTML = '<div class="empty-history">No tests run yet</div>';
+      return;
+    }
+    el.innerHTML = history.map((h, i) => `
+      <div class="history-item" onclick="loadHistory(${i})">
+        <div class="hi-status ${h.ok ? 'ok' : 'err'}"></div>
+        <div class="hi-file">${escHtml(h.fileName)} <span style="color:#475569;font-size:0.75rem">[${h.type}]</span></div>
+        <div class="hi-time">${h.elapsed}s · ${h.time}</div>
+      </div>
+    `).join('');
+  }
+
+  function loadHistory(i) {
+    const h = history[i];
+    if (h.data) showSuccess(h.data, h.elapsed);
+    else showError('Request failed', 0);
+  }
+</script>
+</body>
+</html>

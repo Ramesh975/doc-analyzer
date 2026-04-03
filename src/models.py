@@ -1,20 +1,30 @@
-# Pydantic request/response schemas
-
-# models.py
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 from typing import List, Optional
 
-class Entity(BaseModel):
-    text: str
-    type: str   # PERSON | ORG | DATE | MONEY | LOCATION | OTHER
+class DocumentRequest(BaseModel):
+    fileName: str
+    fileType: str
+    fileBase64: str
 
-class Sentiment(BaseModel):
-    label: str  # positive | negative | neutral
-    score: float
+class EntitiesResponse(BaseModel):
+    names: List[str] = []
+    dates: List[str] = []
+    organizations: List[str] = []
+    amounts: List[str] = []
 
 class AnalyzeResponse(BaseModel):
-    filename: Optional[str] = None
+    status: str
+    fileName: str
     summary: str
-    entities: List[Entity]
-    sentiment: Sentiment
-    word_count: Optional[int] = None
+    entities: EntitiesResponse
+    sentiment: str
+
+    @field_validator('sentiment')
+    @classmethod
+    def validate_sentiment(cls, v):
+        allowed = ['Positive', 'Negative', 'Neutral']
+        # Fix capitalisation if wrong
+        for a in allowed:
+            if v.lower() == a.lower():
+                return a
+        return 'Neutral'
