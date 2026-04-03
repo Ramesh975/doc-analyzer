@@ -4,10 +4,10 @@ from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from dotenv import load_dotenv
 
-from models import DocumentRequest, AnalyzeResponse, EntitiesResponse
-from extractor import extract_text
-from analyzer import analyze_text
-from utils import detect_file_type, clean_text
+from src.models import DocumentRequest, AnalyzeResponse, EntitiesResponse
+from src.extractor import extract_text
+from src.analyzer import analyze_text
+from src.utils import detect_file_type, clean_text
 
 load_dotenv()
 app = FastAPI(title='Doc Analyzer API', version='1.0.0')
