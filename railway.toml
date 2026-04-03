@@ -1,1 +1,13 @@
 # Railway deploy config (if used)
+
+[build]
+builder = "NIXPACKS"
+
+# This replaces your nixpacks.toml (Installs Tesseract OCR)
+[build.nixpacksPlan.phases.setup]
+aptPkgs = ["tesseract-ocr", "tesseract-ocr-eng"]
+
+[deploy]
+# This replaces your Procfile (Starts the FastAPI server)
+startCommand = "uvicorn src.main:app --host 0.0.0.0 --port $PORT"
+restartPolicyType = "ON_FAILURE"
