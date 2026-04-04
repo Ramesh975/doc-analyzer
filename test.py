@@ -3,7 +3,7 @@ import requests
 import json
 
 # ── CONFIG ──────────────────────────────
-API_URL = "http://localhost:8000/api/document-analyze"
+API_URL = "https://doc-analyzer-production-5581.up.railway.app/api/document-analyze"
 API_KEY = "a15fc642-3b35-4090-890e-0a564ecd4fa4"
 
 def test_file(filepath, file_type):

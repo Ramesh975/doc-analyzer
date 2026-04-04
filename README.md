@@ -35,18 +35,18 @@ performs sentiment analysis on document content.
    Edit .env and add your keys
 
 5. Run the application
-   uvicorn main:app --reload --port 8000
+   uvicorn src.main:app --reload --port 8000
 
 ## API Usage
 
 ### Endpoint
 
-POST /api/document-analyze
+POST [doc-analyzer-production-5581.up.railway.app](https://doc-analyzer-production-5581.up.railway.app/api/document-analyze)
 
 ### Headers
 
 Content-Type: application/json
-x-api-key: YOUR_API_KEY
+x-api-key: a15fc642-3b35-4090-890e-0a564ecd4fa4
 
 ### Request Body
 
@@ -100,3 +100,18 @@ All entities are grouped by type:
 
 Document tone classified as Positive, Negative, or Neutral
 based on overall language and context using LLM analysis.
+
+## AI Tools Used
+
+- Claude (Anthropic) — Used for code assistance, debugging,
+  architecture planning, and prompt engineering during development
+- Groq API (llama-3.3-70b-versatile) — Used at runtime for
+  document summarisation, entity extraction, and sentiment analysis
+- Google Gemini: Used as a pair-programming assistant for debugging deployment errors on Railway, optimizing Python regex patterns, and structuring the FastAPI routing.
+
+## Known Limitations
+
+- Free tier Groq API has rate limits (handled with model rotation)
+- Very large files truncated to 6000 characters for AI analysis
+- Scanned PDFs depend on image quality for OCR accuracy
+- No persistent storage — stateless API
